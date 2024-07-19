@@ -9,9 +9,13 @@ execute:
 ```{r}
 #| label: setup
 #| message: false
+#| warning: false
 
 library(tidyverse)
 library(gt)
+library(tidybayes)
+library(bayesplot)
+library(brms)
 ```
 
 
@@ -125,7 +129,21 @@ tibble(ID = c("1", "2", "...", "10", "11", "...", "N"),
 
 
 
+```{r}
+#| cache: TRUE
 
+resume <- read_csv("data/resume.csv", show_col_types = FALSE)
+fit_resume <- brm(formula = call ~ race, data = resume, family = bernoulli(), refresh = 0,
+                silent = 2,
+                seed = 12)
+```
+
+```{r}
+fit_resume |> 
+  add_epred_draws(newdata = tibble(race = c("white", "black"))) |> 
+  select(race, .epred) |>
+  ggplot(aes(x = .epred, fill = race)) + geom_histogram(bins = 100) + labs(title = "Posterier for Callback Rates", subtitle = "Resumes with white coded names are much more likely to recieve callbacks", x = "Probability of Callback", y = NULL, fill = "(Likely) Race of\nName on Resume") + scale_x_continuous(label = scales::percent_format())
+```
 
 
   
